@@ -67,10 +67,52 @@ int main()
 	// Variables to control time itself
 	sf::Clock clock;
 
+	// Time bar
+	sf::RectangleShape timeBar;
+	float timeBarStartWidth = 400;
+	float timeBarHeight = 80;
+	timeBar.setSize(sf::Vector2f(timeBarStartWidth, timeBarHeight));
+	timeBar.setFillColor(sf::Color::Red);
+	timeBar.setPosition((1920 / 2) - timeBarStartWidth / 2, 980);
+	sf::Time gameTimeTotal;
+	float timeRemaining = 6.0f;
+	float timeBarWidthPerSecond = timeBarStartWidth / timeRemaining;
+
 	// Track whether the game is running
 	bool paused = true;
 
+	// Draw some text
+	int score = 0;
+	sf::Text messageText;
+	sf::Text scoreText;
 
+	// Choose a font
+	sf::Font font;
+	font.loadFromFile("fonts/KOMIKAP_.ttf");
+
+	// Set the font to our message
+	messageText.setFont(font);
+	scoreText.setFont(font);
+
+	// Assign the actual message
+	messageText.setString("Press Enter to Start!");
+	scoreText.setString("Score = 0");
+
+	// Make it really big
+	messageText.setCharacterSize(75);
+	scoreText.setCharacterSize(100);
+
+	// Choose a color
+	messageText.setFillColor(sf::Color::White);
+	scoreText.setFillColor(sf::Color::White);
+
+	// Position the text
+	sf::FloatRect textRect = messageText.getLocalBounds();
+	messageText.setOrigin(textRect.left + textRect.width / 2.0f,
+		textRect.top + textRect.height / 2.0f);
+	messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+
+	scoreText.setPosition(20, 20);
 	
 	// Main game loop
 	while (window.isOpen())
@@ -93,6 +135,10 @@ int main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Return))
 		{
 			paused = false;
+
+			// Reset the time and the score
+			score = 0;
+			timeRemaining = 6;
 		}
 
 		/*
@@ -106,6 +152,28 @@ int main()
 		{
 			// Measure time since last clock restart and put it in dt (delta time)
 			sf::Time dt = clock.restart();
+
+			// Subtract from the amount of time remaining
+			timeRemaining -= dt.asSeconds();
+
+			// Size up the timeBar
+			timeBar.setSize(sf::Vector2f(timeBarWidthPerSecond *
+				timeRemaining, timeBarHeight));
+
+			if (timeRemaining <= 0.0f)
+			{
+				// Pause the game
+				paused = true;
+
+				// Change the message shown to the player
+				messageText.setString("Out of Time!!");
+
+				// Reposition the text based on its new size
+				sf::FloatRect textRect = messageText.getLocalBounds();
+				messageText.setOrigin(textRect.left + textRect.width / 2.0f,
+					textRect.top + textRect.height / 2.0f);
+				messageText.setPosition(1920 / 2.0f, 1080 / 2.0f);
+			}
 
 
 			// Setup the bee
@@ -173,8 +241,13 @@ int main()
 
 				}
 			}
-		}
 
+			//Update the score text
+			std::stringstream ss;
+			ss << "Score = " << score;
+			scoreText.setString(ss.str());
+		}
+	
 		/*
 		**********************************
 		Draw the scene
@@ -198,6 +271,17 @@ int main()
 
 		// Draw the insect
 		window.draw(spriteBee);
+
+		// Draw the score
+		window.draw(scoreText);
+		if (paused)
+		{
+			// Draw our message
+			window.draw(messageText);
+		}
+
+		// Draw the timebar
+		window.draw(timeBar);
 		
 		// Show everything we just drew
 		window.display();
